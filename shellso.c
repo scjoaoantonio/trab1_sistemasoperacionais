@@ -1,4 +1,6 @@
 // Bibliotecas necessarias 
+#include <shellso.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
