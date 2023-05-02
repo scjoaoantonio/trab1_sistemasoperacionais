@@ -47,7 +47,6 @@ mostrarDiretorio ()
     }
   printf ("$ ");
 }
-
 // Funcao para separar os argumentos de um comando
 void
 separarArgumentos (char *comando, char **args)
