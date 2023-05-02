@@ -319,7 +319,10 @@ comandoBasico (char **argv, int numArgs)
     }
 }
 
-void leituraComando(){
+
+int
+main ()
+{
   int numArgs = 0;
   int redSaida = 0;
 
@@ -328,14 +331,19 @@ void leituraComando(){
   char *comando1[10];
   char *comando2[10];
 
-  fflush (stdout);
+  msgInicial ();
+
+  while (ON)
+    {
+      mostrarDiretorio ();
+      fflush (stdout);
       if (fgets (comando, sizeof (comando), stdin) == NULL)
 	{
     printf("\nFIM\n");
-	  //break;
-    exit(1);
+	  break;
 	}
-  // Remove o caractere de nova linha
+
+// Remove o caractere de nova linha
       comando[strcspn (comando, "\n")] = 0;
 
       if (strcmp (comando, "fim") == 0)
@@ -374,21 +382,6 @@ void leituraComando(){
 //separarArgumentos (comando, args);
 	  comandoBasico (args, numArgs);
 	}
-}
-
-int
-main ()
-{
- 
-  msgInicial ();
-
-  while (ON)
-    {
-      mostrarDiretorio ();
-      
-      //leitura dos comandos
-      leituraComando();
-
     }
   return 0;
 }
