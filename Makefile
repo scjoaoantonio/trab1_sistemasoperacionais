@@ -1,15 +1,15 @@
 CC = gcc
 CFLAGS = -Wall
 
-OBJ = main.o
+OBJ = shellso.o
 
 all: shell
 
 shell: $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o shell
 
-main.o: main.c $(HDR)
-	$(CC) $(CFLAGS) -c main.c -o main.o
+shellso.o: shellso.c $(HDR)
+	$(CC) $(CFLAGS) -c shellso.c -o shellso.o
 
 clean:
 	rm -f $(OBJ) shell

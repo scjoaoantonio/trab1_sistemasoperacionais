@@ -6,12 +6,15 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
+#include <signal.h>
 
 // Cores usadas
 #define COR_AZUL   "\x1b[34m"
 #define COR_VERDE  "\x1b[32m"
 #define NEGRITO  "\e[1m"
 #define RESET_COR  "\x1b[0m"
+
 
 // Constante de 'true' para tornar mais legivel o codigo
 #define ON 1
@@ -24,7 +27,7 @@ msgInicial ()
 }
 
 /*Funcao para mostrar o diretorio em 
-que o shell esta sendo executado*/
+que o shellesta sendo executado*/
 void
 mostrarDiretorio ()
 {
@@ -38,9 +41,10 @@ mostrarDiretorio ()
       printf (NEGRITO ":" RESET_COR);
       printf (COR_AZUL NEGRITO "%s" RESET_COR, cwd);
     }
-  else{
-  	perror ("falha ao carregar diretorio\n");
-  }
+  else
+    {
+      perror ("falha ao carregar diretorio\n");
+    }
   printf ("$ ");
 }
 
@@ -67,7 +71,7 @@ separarComandosPipe (char *comando, char **comando1, char **comando2)
   char *antes_pipe = strtok (comando, "|");
   char *depois_pipe = strtok (NULL, "|");
 
-  // Separa pelo espaco os argumentos do primeiro comando e salva em comando1
+// Separa pelo espaC'o os argumentos do primeiro comando e salva em comando1
   int i = 0;
   char *arg = strtok (antes_pipe, " ");
   while (arg != NULL)
@@ -78,7 +82,7 @@ separarComandosPipe (char *comando, char **comando1, char **comando2)
     }
   comando1[i] = NULL;
 
-  // Separa pelo espaco os argumentos do segundo comando e salva em comando2
+// Separa pelo espaco os argumentos do segundo comando e salva em comando2
   i = 0;
   arg = strtok (depois_pipe, " ");
   while (arg != NULL)
@@ -91,22 +95,22 @@ separarComandosPipe (char *comando, char **comando1, char **comando2)
 }
 
 void
-executarComandosPipe (char **comando1, char **comando2)
+execComandosPipe (char **comando1, char **comando2)
 {
   int pipe_fd[2];
   pid_t pid, pid2;
 
-  // Criar o pipe
+// Criar o pipe
   pipe (pipe_fd);
-  // Cria o primeiro processo filho
+// Cria o primeiro processo filho
   pid = fork ();
   if (pid == 0)
     {
-      //Fecha a extremidade de leitura do pipe e redireciona a saida do processo pai para a entrada do pipe, usando a funcao dup2
+//Fecha a extremidade de leitura do pipe e redireciona a saC-da do processo pai para a entrada do pipe, usando a funC'C#o dup2
       dup2 (pipe_fd[1], STDOUT_FILENO);
       close (pipe_fd[0]);
 
-      // Executa o primeiro comando, se nao executar, da erro
+// Executa o primeiro comando, se nao executar, da erro
       if (execvp (comando1[0], comando1) == -1)
 	{
 	  perror ("Erro: primeiro comando.");
@@ -114,16 +118,16 @@ executarComandosPipe (char **comando1, char **comando2)
 	}
     }
 
-  // Cria o segundo processo filho 
+// Cria o segundo processo filho 
   pid2 = fork ();
 
   if (pid2 == 0)
     {
-      //Fecha a extremidade de leitura do pipe e redireciona a saida do processo filho para a entrada do pipe, usando a funcao dup2
+//Fecha a extremidade de leitura do pipe e redireciona a saC-da do processo filho para a entrada do pipe, usando a funC'C#o dup2
       dup2 (pipe_fd[0], STDIN_FILENO);
       close (pipe_fd[1]);
 
-      // Executa o segundo comando, se nao executar, da erro
+// Executa o segundo comando, se nao executar, da erro
       if (execvp (comando2[0], comando2) == -1)
 	{
 	  perror ("Erro: segundo comando.");
@@ -131,11 +135,11 @@ executarComandosPipe (char **comando1, char **comando2)
 	}
     }
 
-  // Fecha as extremidades do pipe no processo pai
+// Fecha as extremidades do pipe no processo pai
   close (pipe_fd[0]);
   close (pipe_fd[1]);
 
-  // Espera pelos processos filhos terminarem
+// Espera pelos processos filhos terminarem
   waitpid (pid, NULL, 0);
   waitpid (pid2, NULL, 0);
 }
@@ -168,23 +172,30 @@ se o arquivo nao existe ele eh criado*/
 void
 redirecionaSaida (char **buffer)
 {
-  int aux;
-  char *argv[100];
+  int aux, aux2, async = 0;
+  char *argv[100], *buffer2[100];
 
   quebraArgumentos (argv, &aux, buffer[0], " ");
+  quebraArgumentos (buffer2, &aux2, buffer[1], " ");
+
+  if (strcmp (buffer2[aux2 - 1], "&") == 0)
+    {
+      async = 1;
+      signal (SIGCHLD, SIG_IGN);
+    }
 
   if (fork () == 0)
-    {
-      int redirecionaFd = open (buffer[1], O_WRONLY, S_IRUSR | S_IWUSR);	//Tags para escrita e acesso ao arquivo
+    {				//Filho
+      int redirecionaFd = open (buffer2[0], O_WRONLY, S_IRUSR | S_IWUSR);	//Tags para escrita e acesso ao arquivo
 
-      //Caso o arquivo nao exista eh incluida a tag de criacao de arquivo
+//Caso o arquivo nao exista eh incluida a tag de criacao de arquivo
       if (redirecionaFd < 0)
 	{
 	  redirecionaFd =
-	    open (buffer[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	    open (buffer2[0], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 	}
 
-      //Verifica novamente se o arquivo foi criado com sucesso
+//Verifica novamente se o arquivo foi criado com sucesso
       if (redirecionaFd < 0)
 	{
 	  perror ("Erro ao criar arquivo!");
@@ -196,32 +207,125 @@ redirecionaSaida (char **buffer)
       perror (argv[0]);
       exit (1);
     }
-
-  wait (NULL);
+  else
+    {
+      if (async != 1)
+	{
+	  wait (NULL);
+	}
+    }
 }
 
+/*Funcao para redirecionar entrada para arquivo*/
+void
+redirecionaEntrada (char **buffer, int numArgs, int redSaida)
+{
+  int aux, aux2,saidaFd, async = 0;
+  char *argv[100], *buffer2[100];
+
+  quebraArgumentos (argv, &aux, buffer[0], " ");
+  quebraArgumentos (buffer2, &aux2, buffer[numArgs - 1], " >");
+
+  buffer[1]++;
+
+  if (redSaida == 1)
+    {
+      int tamanhoString = 0;
+
+      tamanhoString = strlen (buffer[1]);
+      buffer[1][tamanhoString - 1] = '\0';
+    }
+
+  if (strcmp (buffer2[aux2 - 1], "&") == 0)
+    {
+      async = 1;
+      argv[numArgs - 1] = '\0';
+      signal (SIGCHLD, SIG_IGN);
+    }
+
+  if (fork () == 0)
+    {				//Filho
+      if (redSaida == 1)
+	{
+	  saidaFd = open (buffer2[0], O_WRONLY, S_IRUSR | S_IWUSR);	//Tags para escrita e acesso ao arquivo
+
+//Caso o arquivo nao exista eh incluida a tag de criacao de arquivo
+	  if (saidaFd < 0)
+	    {
+	      saidaFd =
+		open (buffer2[0], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	    }
+
+//Verifica novamente se o arquivo foi criado com sucesso
+	  if (saidaFd < 0)
+	    {
+	      perror ("Erro ao criar arquivo!");
+	    }
+
+	  dup2 (saidaFd, 1);
+	}
+
+      int redirecionaFd = open (buffer[1], O_RDONLY, S_IRUSR | S_IWUSR);	//Tags para leitura e acesso ao arquivo
+
+//Caso o arquivo nao exista eh exibida uma mensagem de erro
+      if (redirecionaFd < 0)
+	{
+	  perror ("Erro ao abrir o arquivo!");
+	  exit (1);
+	}
+
+      dup2 (redirecionaFd, 0);
+
+      execvp (argv[0], argv);
+      perror (argv[0]);
+      exit (1);
+    }
+  else
+    {
+      if (async != 1)
+	{
+	  wait (NULL);
+	}
+    }
+}
 
 /*Funcao para executar um comando basico
 sem redirecionador ou pipes*/
 void
-comandoBasico (char **argv)
+comandoBasico (char **argv, int numArgs)
 {
-  if (fork () > 0)
+  int async = 0;
+
+//Verifica se eh um comando assincrono
+  if (strcmp (argv[numArgs - 1], "&") == 0)
     {
-      wait (NULL);
+      async = 1;
+      argv[numArgs - 1] = '\0';
+      signal (SIGCHLD, SIG_IGN);
     }
-  else
-    {
+
+  if (fork () == 0)
+    {				//Filho
       execvp (argv[0], argv);
       perror (argv[0]);		//Caso o comando nao exista emite uma mensagem de erro
       exit (1);
     }
+  else
+    {
+      if (async != 1)
+	{
+	  wait (NULL);
+	}
+    }
 }
 
+
 int
-main (void)
+main ()
 {
   int numArgs = 0;
+  int redSaida = 0;
+
   char *args[64];
   char comando[128];
   char *comando1[10];
@@ -229,7 +333,7 @@ main (void)
 
   msgInicial ();
 
-  while (ON)
+  while (1)
     {
       mostrarDiretorio ();
       fflush (stdout);
@@ -238,7 +342,7 @@ main (void)
 	  break;
 	}
 
-      // Remove o caractere de nova linha
+// Remove o caractere de nova linha
       comando[strcspn (comando, "\n")] = 0;
 
       if (strcmp (comando, "fim") == 0)
@@ -247,22 +351,23 @@ main (void)
 	  exit (1);
 	}
 
-      // Verifica se eh um comando simples ou com pipe
+// Verifica se eh um comando simples ou com pipe
       else if (strstr (comando, "|") != NULL)
 	{
-	  // Se eh um comando com pipe, separa os comandos
+// Se eh um comando com pipe, separa os comandos
 	  separarComandosPipe (comando, comando1, comando2);
-	  // Executa os comandos na pipe
-	  executarComandosPipe (comando1, comando2);
+// Executa os comandos na pipe
+	  execComandosPipe (comando1, comando2);
 	}
       else if (strstr (comando, "<="))
 	{
+	  if (strstr (comando, "=>"))
+	    {
+	      redSaida = 1;
+	    }
+	  quebraArgumentos (args, &numArgs, comando, "<=");
+	  redirecionaEntrada (args, numArgs, redSaida);
 	}			//Redirecionar entrada para arquivo
-
-      else if (strchr (comando, '&'))
-	{
-	}			//Execucao em background
-
       else if (strstr (comando, "=>"))
 	{			//Redirecionar saida para arquivo
 	  quebraArgumentos (args, &numArgs, comando, "=>");
@@ -270,11 +375,11 @@ main (void)
 	}
       else
 	{
-	  // Se eh um comando simples, separa os argumentos e executa
+// Se eh um comando simples, separa os argumentos e executa
 
-	  quebraArgumentos(args,&numArgs,comando," "); 
-	  //separarArgumentos (comando, args);
-	  comandoBasico (args);
+	  quebraArgumentos (args, &numArgs, comando, " ");
+//separarArgumentos (comando, args);
+	  comandoBasico (args, numArgs);
 	}
     }
   return 0;
