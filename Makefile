@@ -2,6 +2,7 @@ CC = gcc
 CFLAGS = -Wall
 
 OBJ = shellso.o
+HDR = shellso.h
 
 all: shell
 

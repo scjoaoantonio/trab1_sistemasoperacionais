@@ -1,5 +1,5 @@
 // Bibliotecas necessarias 
-#include <shellso.h>
+#include "./shellso.h"
 
 #include <stdio.h>
 #include <stdlib.h>
