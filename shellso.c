@@ -333,12 +333,13 @@ main ()
 
   msgInicial ();
 
-  while (1)
+  while (ON)
     {
       mostrarDiretorio ();
       fflush (stdout);
       if (fgets (comando, sizeof (comando), stdin) == NULL)
 	{
+    printf("\nFIM\n");
 	  break;
 	}
 
