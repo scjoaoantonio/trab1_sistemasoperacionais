@@ -24,7 +24,7 @@ msgInicial ()
 }
 
 /*Funcao para mostrar o diretorio em 
-que o shellesta sendo executado*/
+que o shell esta sendo executado*/
 void
 mostrarDiretorio ()
 {
@@ -67,7 +67,7 @@ separarComandosPipe (char *comando, char **comando1, char **comando2)
   char *antes_pipe = strtok (comando, "|");
   char *depois_pipe = strtok (NULL, "|");
 
-  // Separa pelo espaC'o os argumentos do primeiro comando e salva em comando1
+  // Separa pelo espaco os argumentos do primeiro comando e salva em comando1
   int i = 0;
   char *arg = strtok (antes_pipe, " ");
   while (arg != NULL)
@@ -91,7 +91,7 @@ separarComandosPipe (char *comando, char **comando1, char **comando2)
 }
 
 void
-execComandosPipe (char **comando1, char **comando2)
+executarComandosPipe (char **comando1, char **comando2)
 {
   int pipe_fd[2];
   pid_t pid, pid2;
@@ -102,7 +102,7 @@ execComandosPipe (char **comando1, char **comando2)
   pid = fork ();
   if (pid == 0)
     {
-      //Fecha a extremidade de leitura do pipe e redireciona a saC-da do processo pai para a entrada do pipe, usando a funC'C#o dup2
+      //Fecha a extremidade de leitura do pipe e redireciona a saida do processo pai para a entrada do pipe, usando a funcao dup2
       dup2 (pipe_fd[1], STDOUT_FILENO);
       close (pipe_fd[0]);
 
@@ -119,7 +119,7 @@ execComandosPipe (char **comando1, char **comando2)
 
   if (pid2 == 0)
     {
-      //Fecha a extremidade de leitura do pipe e redireciona a saC-da do processo filho para a entrada do pipe, usando a funC'C#o dup2
+      //Fecha a extremidade de leitura do pipe e redireciona a saida do processo filho para a entrada do pipe, usando a funcao dup2
       dup2 (pipe_fd[0], STDIN_FILENO);
       close (pipe_fd[1]);
 
@@ -229,7 +229,7 @@ main (void)
 
   msgInicial ();
 
-  while (1)
+  while (ON)
     {
       mostrarDiretorio ();
       fflush (stdout);
@@ -253,7 +253,7 @@ main (void)
 	  // Se eh um comando com pipe, separa os comandos
 	  separarComandosPipe (comando, comando1, comando2);
 	  // Executa os comandos na pipe
-	  execComandosPipe (comando1, comando2);
+	  executarComandosPipe (comando1, comando2);
 	}
       else if (strstr (comando, "<="))
 	{
