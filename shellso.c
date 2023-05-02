@@ -220,7 +220,7 @@ redirecionaSaida (char **buffer)
 void
 redirecionaEntrada (char **buffer, int numArgs, int redSaida)
 {
-  int aux, aux2,saidaFd, async = 0;
+  int aux, aux2, saidaFd, async = 0;
   char *argv[100], *buffer2[100];
 
   quebraArgumentos (argv, &aux, buffer[0], " ");
@@ -319,7 +319,9 @@ comandoBasico (char **argv, int numArgs)
     }
 }
 
-void leituraComando(){
+void
+leituraComando ()
+{
   int numArgs = 0;
   int redSaida = 0;
 
@@ -329,65 +331,65 @@ void leituraComando(){
   char *comando2[10];
 
   fflush (stdout);
-      if (fgets (comando, sizeof (comando), stdin) == NULL)
-	{
-    printf("\nFIM\n");
-	  //break;
-    exit(1);
-	}
-  // Remove o caractere de nova linha
-      comando[strcspn (comando, "\n")] = 0;
+  if (fgets (comando, sizeof (comando), stdin) == NULL)
+    {
+      printf ("\nFIM\n");
+//break;
+      exit (1);
+    }
+// Remove o caractere de nova linha
+  comando[strcspn (comando, "\n")] = 0;
 
-      if (strcmp (comando, "fim") == 0)
-	{
-	  printf ("\n");
-	  exit (1);
-	}
+  if (strcmp (comando, "fim") == 0)
+    {
+      printf ("\n");
+      exit (1);
+    }
 
 // Verifica se eh um comando simples ou com pipe
-      else if (strstr (comando, "|") != NULL)
-	{
+  else if (strstr (comando, "|") != NULL)
+    {
 // Se eh um comando com pipe, separa os comandos
-	  separarComandosPipe (comando, comando1, comando2);
+      separarComandosPipe (comando, comando1, comando2);
 // Executa os comandos na pipe
-	  execComandosPipe (comando1, comando2);
-	}
-      else if (strstr (comando, "<="))
+      execComandosPipe (comando1, comando2);
+    }
+  else if (strstr (comando, "<="))
+    {
+      if (strstr (comando, "=>"))
 	{
-	  if (strstr (comando, "=>"))
-	    {
-	      redSaida = 1;
-	    }
-	  quebraArgumentos (args, &numArgs, comando, "<=");
-	  redirecionaEntrada (args, numArgs, redSaida);
-	}			//Redirecionar entrada para arquivo
-      else if (strstr (comando, "=>"))
-	{			//Redirecionar saida para arquivo
-	  quebraArgumentos (args, &numArgs, comando, "=>");
-	  redirecionaSaida (args);
+	  redSaida = 1;
 	}
-      else
-	{
+      quebraArgumentos (args, &numArgs, comando, "<=");
+      redirecionaEntrada (args, numArgs, redSaida);
+    }				//Redirecionar entrada para arquivo
+  else if (strstr (comando, "=>"))
+    {				//Redirecionar saida para arquivo
+      quebraArgumentos (args, &numArgs, comando, "=>");
+      redirecionaSaida (args);
+    }
+  else
+    {
 // Se eh um comando simples, separa os argumentos e executa
 
-	  quebraArgumentos (args, &numArgs, comando, " ");
+      quebraArgumentos (args, &numArgs, comando, " ");
 //separarArgumentos (comando, args);
-	  comandoBasico (args, numArgs);
-	}
+      comandoBasico (args, numArgs);
+    }
 }
 
 int
 main ()
 {
- 
+
   msgInicial ();
 
   while (ON)
     {
       mostrarDiretorio ();
-      
-      //leitura dos comandos
-      leituraComando();
+
+//leitura dos comandos
+      leituraComando ();
 
     }
   return 0;
